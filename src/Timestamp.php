@@ -12,6 +12,7 @@
 namespace spriebsch\timestamp;
 
 use DateTimeImmutable;
+use DateTimeZone;
 
 final class Timestamp
 {
@@ -37,13 +38,22 @@ final class Timestamp
         $this->dateTime = $dateTime;
     }
 
-    public function asDateTime(): DateTimeImmutable
+    public function asDateTime(?DateTimeZone $timeZone = null): DateTimeImmutable
     {
-        return $this->dateTime;
+        if ($timeZone === null) {
+            $timeZone = $this->defaultTimezone();
+        }
+
+        return $this->dateTime->setTimezone($timeZone);
     }
 
     public function asString(): string
     {
-        return $this->dateTime->format('c.u');
+        return $this->dateTime->setTimezone(new DateTimeZone('UTC'))->format('c.u');
+    }
+
+    private function defaultTimezone(): DateTimeZone
+    {
+        return new DateTimeZone(date_default_timezone_get());
     }
 }

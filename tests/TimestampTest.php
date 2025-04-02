@@ -12,6 +12,7 @@
 namespace spriebsch\uuid;
 
 use DateTimeImmutable;
+use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 use spriebsch\timestamp\Timestamp;
 
@@ -29,8 +30,8 @@ class TimestampTest extends TestCase
         $timestamp = Timestamp::generate();
         $after = new DateTimeImmutable(('now'));
 
-        $this->assertGreaterThan($timestamp->asDateTime(), $after);
-        $this->assertLessThan($timestamp->asDateTime(), $before);
+        $this->assertGreaterThanOrEqual($timestamp->asDateTime(), $after);
+        $this->assertLessThanOrEqual($timestamp->asDateTime(), $before);
     }
 
     public function test_can_be_created_from_string(): void
@@ -47,6 +48,19 @@ class TimestampTest extends TestCase
         $this->assertEquals($now, Timestamp::fromDateTime($now)->asDateTime());
     }
 
+    public function test_is_serialized_as_UTC(): void
+    {
+        $now = new DateTimeImmutable('now');
+        $nowUTC = $now->setTimezone(new DateTimeZone('UTC'));
+
+        $timestamp = Timestamp::fromDateTime($now);
+
+        $this->assertEquals(
+            $nowUTC->format('c.u'),
+            $timestamp->asString(),
+        );
+    }
+
     public function test_can_be_converted_to_string(): void
     {
         $this->assertIsString(Timestamp::generate()->asString());
@@ -55,5 +69,16 @@ class TimestampTest extends TestCase
     public function test_can_be_converted_to_datetime(): void
     {
         $this->assertInstanceOf(DateTimeImmutable::class, Timestamp::generate()->asDateTime());
+    }
+
+    public function test_can_be_converted_to_datetime_with_given_timezone(): void
+    {
+        $timeZone = new DateTimeZone('HKT');
+        $now = new DateTimeImmutable('now');
+
+        $this->assertSame(
+            $now->setTimezone($timeZone)->format('c.u'),
+            Timestamp::fromDateTime($now)->asDateTime($timeZone)->format('c.u')
+        );
     }
 }
